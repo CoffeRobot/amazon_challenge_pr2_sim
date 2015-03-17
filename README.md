@@ -5,7 +5,15 @@ This package brings up a simulated PR2 in gazebo with the Kiva shelf for the ama
 
 ### Requirements ###
 
-* Make sure you have **pr2_gazebo** and **gazebo** installed 
+* Make sure you have **pr2_gazebo** and **gazebo** installed :
+
+
+```
+#!python
+
+sudo apt-get install ros-hydro-pr2-* gazebo ros-hydro-gazebo*
+```
+
 
 ### Installation ###
 
@@ -32,5 +40,5 @@ catkin_make
 ```
 #!python
 
-roslaunch pr2_kiva_shelf_sim pr2_sim_bringup.launch
+roslaunch pr2_kiva_shelf_sim pr2_kiva_shelf_sim.launch
 ```
