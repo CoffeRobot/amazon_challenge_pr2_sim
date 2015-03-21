@@ -5,6 +5,6 @@
   <include file="$(find pr2_gazebo)/launch/pr2_empty_world.launch"/>
 
   <!-- spawn the shelf -->
-  <node name="spawn_shelf" pkg="gazebo_ros" type="spawn_model" args="-file $(find pr2_kiva_shelf_sim)/kiva_pod/model.sdf -sdf -x 2.0 -Y -1.5708 -model kiva_shelf"/>
+  <node name="spawn_shelf" pkg="gazebo_ros" type="spawn_model" args="-file $(find pr2_amazon_challenge_sim)/kiva_pod/model.sdf -sdf -x 2.0 -Y -1.5708 -model kiva_shelf"/>
       
 </launch>
