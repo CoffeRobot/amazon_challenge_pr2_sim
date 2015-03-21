@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(pr2_kiva_shelf_sim)
+project(pr2_amazon_challenge_sim)
 
 
 find_package(catkin REQUIRED COMPONENTS

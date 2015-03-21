@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>pr2_kiva_shelf_sim</name>
+  <name>pr2_amazon_challenge_sim</name>
   <version>0.0.0</version>
-  <description>Gazebo simulation of PR2 with Amazon Kiva shelf.</description>
+  <description>Gazebo simulation of PR2 for the Amazon Picking Challenge ICRA'15.</description>
 
   <maintainer email="fevb@kth.se">Francisco Viña</maintainer>
 

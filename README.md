@@ -22,7 +22,7 @@ sudo apt-get install ros-hydro-pr2-* gazebo ros-hydro-gazebo*
 ```
 #!python
 
-git clone https://bitbucket.org/cvapgoestoseattle/pr2_kiva_shelf_sim
+git clone https://bitbucket.org/cvapgoestoseattle/pr2_amazon_challenge_sim
 ```
 
 * Compile the workspace
@@ -36,9 +36,10 @@ catkin_make
 
 ### Launching the simulation ###
 
+To simulate a PR2 and empty Kiva shelf in Gazebo:
 
 ```
 #!python
 
-roslaunch pr2_kiva_shelf_sim pr2_kiva_shelf_sim.launch
+roslaunch pr2_amazon_challenge_sim pr2_empty_shelf.launch
 ```
