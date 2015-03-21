@@ -1,6 +1,6 @@
 # pr2_amazon_challenge_sim #
 
-This package brings up a simulated PR2 in gazebo with the Kiva shelf for the amazon challenge
+This package brings up a simulated PR2 with a Kiva shelf, setup for the Amazon Picking Challenge ICRA'15
 ![pr2_gazebo_kiva.png](https://bitbucket.org/repo/GEndLK/images/1160564541-pr2_gazebo_kiva.png)
 
 ### Requirements ###
