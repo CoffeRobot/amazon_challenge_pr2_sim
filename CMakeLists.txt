@@ -18,6 +18,11 @@ include_directories(
 
 
 add_custom_target(
-  copy_gazebo_model ALL
+  copy_kiva_pod ALL
   COMMAND mkdir -p $ENV{HOME}/.gazebo/models && cp -a ${CMAKE_CURRENT_SOURCE_DIR}/kiva_pod $ENV{HOME}/.gazebo/models
+)
+
+add_custom_target(
+  copy_kiva_pod_medres ALL
+  COMMAND mkdir -p $ENV{HOME}/.gazebo/models && cp -a ${CMAKE_CURRENT_SOURCE_DIR}/kiva_pod_medres $ENV{HOME}/.gazebo/models
 )
