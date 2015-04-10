@@ -109,10 +109,18 @@ class baseScan:
 			# check if human calibration is done
 			shelfOri, shelfRot = self.getShelfFrame()
 
+			if self.calibrated:
+				while True:
+					try:
+						self.priorOri, self.priorRot = self.listener.lookupTransform("/base_laser_link", "/shelf_frame", rospy.Time(0))
+						break
+					except:
+						pass
+
 			if self.calibrated and math.sqrt((self.priorOri[0]-shelfOri[0]) **2 + (self.priorOri[1]-shelfOri[1]) **2) > 0.1:
 				print colored('something is wrong with shelf pose estimation!!!!!!!!!!', 'red', attrs=['blink'])
 				self.calibrated = False
-				# ask = True
+				ask = True
 				# raw_input('RECALIBRATE WITH TILT LASER SCANNER!!!!!!!!!!!!!!!!!!!!')
 			
 			self.br.sendTransform((shelfOri[0], shelfOri[1], 0),
@@ -131,15 +139,10 @@ class baseScan:
 					ask = False
 					print colored('human calibration of shelf pose is done', 'yellow', 'on_white')
 					print colored('prior position of the shelf is: X = %4f, Y = %4f' % (shelfOri[0], shelfOri[1]), 'yellow', 'on_white')
+					self.priorOri = shelfOri
+					self.priorRot = shelfRot
 					self.rate = rospy.Rate(1000)
 
-			if self.calibrated:
-				while True:
-					try:
-						self.priorOri, self.priorRot = self.listener.lookupTransform("/base_laser_link", "/shelf_frame", rospy.Time(0))
-						break
-					except:
-						pass
 
 
 			self.rate.sleep()
