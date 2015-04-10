@@ -72,8 +72,8 @@ class baseScan:
 				radius.append(math.sqrt(x[i]**2 + y[i]**2))
 		n = radius.index(min(radius))
 		
-		x2 = [x[i] for i in range(len(x)) if math.sqrt( (x[i]-x[n])**2 + (y[i]-y[n])**2 ) > 0.1]
-		y2 = [y[i] for i in range(len(y)) if math.sqrt( (x[i]-x[n])**2 + (y[i]-y[n])**2 ) > 0.1]
+		x2 = [x[i] for i in range(len(x)) if math.sqrt( (x[i]-x[n])**2 + (y[i]-y[n])**2 ) > 0.4]
+		y2 = [y[i] for i in range(len(y)) if math.sqrt( (x[i]-x[n])**2 + (y[i]-y[n])**2 ) > 0.4]
 		radius2 = []
 		
 		if self.calibrated:
@@ -112,7 +112,7 @@ class baseScan:
 			if self.calibrated and math.sqrt((self.priorOri[0]-shelfOri[0]) **2 + (self.priorOri[1]-shelfOri[1]) **2) > 0.1:
 				print colored('something is wrong with shelf pose estimation!!!!!!!!!!', 'red', attrs=['blink'])
 				self.calibrated = False
-				ask = True
+				# ask = True
 				# raw_input('RECALIBRATE WITH TILT LASER SCANNER!!!!!!!!!!!!!!!!!!!!')
 			
 			self.br.sendTransform((shelfOri[0], shelfOri[1], 0),
