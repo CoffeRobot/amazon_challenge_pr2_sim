@@ -116,13 +116,11 @@ class baseScan:
 						break
 					except:
 						pass
-
-			if self.calibrated and math.sqrt((self.priorOri[0]-shelfOri[0]) **2 + (self.priorOri[1]-shelfOri[1]) **2) > 0.1:
-				print colored('something is wrong with shelf pose estimation!!!!!!!!!!', 'red', attrs=['blink'])
-				self.calibrated = False
-				ask = True
-				# raw_input('RECALIBRATE WITH TILT LASER SCANNER!!!!!!!!!!!!!!!!!!!!')
-			
+				if math.sqrt((self.priorOri[0]-shelfOri[0]) **2 + (self.priorOri[1]-shelfOri[1]) **2) > 0.1:
+					print colored('something is wrong with shelf pose estimation!!!!!!!!!!', 'red', attrs=['blink'])
+					self.calibrated = False
+					ask = True
+					
 			self.br.sendTransform((shelfOri[0], shelfOri[1], 0),
 	                         tf.transformations.quaternion_from_euler(0, 0, shelfRot),
 	                         rospy.Time.now(),
