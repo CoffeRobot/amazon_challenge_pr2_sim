@@ -114,6 +114,7 @@ class baseScan:
 				self.calibrated = False
 				ask = True
 				# raw_input('RECALIBRATE WITH TILT LASER SCANNER!!!!!!!!!!!!!!!!!!!!')
+			
 			self.br.sendTransform((shelfOri[0], shelfOri[1], 0),
 	                         tf.transformations.quaternion_from_euler(0, 0, shelfRot),
 	                         rospy.Time.now(),
@@ -127,13 +128,18 @@ class baseScan:
 
 				if answer == 'y' or answer == 'yes':
 					self.calibrated = True
+					ask = False
 					print colored('human calibration of shelf pose is done', 'yellow', 'on_white')
 					print colored('prior position of the shelf is: X = %4f, Y = %4f' % (shelfOri[0], shelfOri[1]), 'yellow', 'on_white')
-					self.rate = rospy.Rate(100.0)
+					self.rate = rospy.Rate(1000)
 
 			if self.calibrated:
-				ask = False
-				self.priorOri = shelfOri
-				self.priorRot = shelfRot
+				while True:
+					try:
+						self.priorOri, self.priorRot = self.listener.lookupTransform("/base_laser_link", "/shelf_frame", rospy.Time(0))
+						break
+					except:
+						pass
+
 
 			self.rate.sleep()
