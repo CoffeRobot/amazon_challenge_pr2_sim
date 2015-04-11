@@ -27,8 +27,14 @@ class baseScan:
 		self.br = tf.TransformBroadcaster()
 		self.rate = rospy.Rate(4.0)
 		self.calibrated = False
+		self.reCalibration = False
 		self.priorOri = []
-		self.priorRot = 0
+		self.priorLeft = []
+		self.priorRight = []
+		self.odomL = []
+		self.odomR = []
+		self.priorAvailable = False
+
 
 
 	def callback(self,data):
@@ -39,6 +45,8 @@ class baseScan:
 		while len(self.rangeData.ranges) == 0:
 			rospy.sleep(0.1)
 
+	def getStatus(self):
+		return self.calibrated
 
 	def getCloud(self):
 
@@ -63,30 +71,39 @@ class baseScan:
 			y.append(pc[i][1])
 		radius = []
 
-		if self.calibrated: # use prior to find legs
+		if self.calibrated or self.reCalibration: # use prior to find legs
 			for i in range(len(pc)):
-				radius.append(math.sqrt((x[i]-self.priorOri[0])**2 + (y[i] - self.priorOri[1])**2))
+				radius.append(math.sqrt((x[i]-self.priorLeft[0])**2 + (y[i] - self.priorLeft[1])**2))
+			n1 = radius.index(min(radius))
+
+			radius = []
+			for i in range(len(pc)):
+				radius.append(math.sqrt((x[i]-self.priorRight[0])**2 + (y[i] - self.priorRight[1])**2))
+			n2 = radius.index(min(radius))
+
+			self.leg1 = [x[n1], y[n1]]
+			self.leg2 = [x[n2], y[n2]]
 		else:
 			# Assuming there is nothing between the robot and the shelf
 			for i in range(len(pc)):
 				radius.append(math.sqrt(x[i]**2 + y[i]**2))
-		n = radius.index(min(radius))
-		
-		x2 = [x[i] for i in range(len(x)) if math.sqrt( (x[i]-x[n])**2 + (y[i]-y[n])**2 ) > 0.4]
-		y2 = [y[i] for i in range(len(y)) if math.sqrt( (x[i]-x[n])**2 + (y[i]-y[n])**2 ) > 0.4]
-		radius2 = []
-		
-		if self.calibrated:
-			for i in range(len(x2)):
-				radius2.append(math.sqrt((x2[i] - self.priorOri[0])**2 + (y2[i] - self.priorOri[1])**2))
-		else:
-			for i in range(len(x2)):
-				radius2.append(math.sqrt(x2[i]**2 + y2[i]**2))
-		n2 = radius2.index(min(radius2))
+			n = radius.index(min(radius))
+			
+			x2 = [x[i] for i in range(len(x)) if math.sqrt( (x[i]-x[n])**2 + (y[i]-y[n])**2 ) > 0.4]
+			y2 = [y[i] for i in range(len(y)) if math.sqrt( (x[i]-x[n])**2 + (y[i]-y[n])**2 ) > 0.4]
+			radius2 = []
+			
+			if self.calibrated:
+				for i in range(len(x2)):
+					radius2.append(math.sqrt((x2[i] - self.priorOri[0])**2 + (y2[i] - self.priorOri[1])**2))
+			else:
+				for i in range(len(x2)):
+					radius2.append(math.sqrt(x2[i]**2 + y2[i]**2))
+			n2 = radius2.index(min(radius2))
 
-		self.leg1 = [x[n], y[n]]
-		self.leg2 = [x2[n2], y2[n2]]
-		return [self.leg1, self.leg2]
+			self.leg1 = [x[n], y[n]]
+			self.leg2 = [x2[n2], y2[n2]]
+		return [self.leg1, self.leg2] # left, right
 
 	def getShelfFrame(self):
 		# with respect to the frame of /base_scan
@@ -108,40 +125,114 @@ class baseScan:
 		while not rospy.is_shutdown():
 			# check if human calibration is done
 			shelfOri, shelfRot = self.getShelfFrame()
+			legs = self.findLegs()
+			
 
-			if self.calibrated:
-				while True:
-					try:
-						self.priorOri, self.priorRot = self.listener.lookupTransform("/base_laser_link", "/shelf_frame", rospy.Time(0))
-						break
-					except:
-						pass
+			if not self.calibrated:
+				self.br.sendTransform((shelfOri[0], shelfOri[1], 0),
+		                         tf.transformations.quaternion_from_euler(0, 0, shelfRot),
+		                         rospy.Time.now(),
+		                         "/shelf_frame",     # child
+		                         "/base_laser_link"      # parent
+		                         )
 
-			if self.calibrated and math.sqrt((self.priorOri[0]-shelfOri[0]) **2 + (self.priorOri[1]-shelfOri[1]) **2) > 0.1:
-				print colored('something is wrong with shelf pose estimation!!!!!!!!!!', 'red', attrs=['blink'])
-				self.calibrated = False
-				ask = True
-				# raw_input('RECALIBRATE WITH TILT LASER SCANNER!!!!!!!!!!!!!!!!!!!!')
+				self.br.sendTransform((legs[0][0], legs[0][1], 0), \
+		                         tf.transformations.quaternion_from_euler(0, 0, shelfRot), \
+		                         rospy.Time.now(),\
+		                         "/left_leg",   \
+		                         "/base_laser_link")
+
+				self.br.sendTransform((legs[1][0], legs[1][1], 0), \
+		                         tf.transformations.quaternion_from_euler(0, 0, shelfRot), \
+		                         rospy.Time.now(),\
+		                         "/right_leg",   \
+		                         "/base_laser_link")
+				
 			
-			self.br.sendTransform((shelfOri[0], shelfOri[1], 0),
-	                         tf.transformations.quaternion_from_euler(0, 0, shelfRot),
-	                         rospy.Time.now(),
-	                         "/shelf_frame",     # child
-	                         "/base_laser_link"      # parent
-	                         )
-			
-			
+			if self.priorAvailable:
+				try:
+					newOri, newRot = self.listener.lookupTransform("/odom_combined", "/shelf_frame", rospy.Time(0))
+					newL, newRL = self.listener.lookupTransform("/base_laser_link", "/odomL", rospy.Time(0))
+					newR, newRR = self.listener.lookupTransform("/base_laser_link", "/odomR", rospy.Time(0))
+					self.priorLeft = newL
+					self.priorRight = newR
+				except:
+					continue
+			else:
+				try:
+					newOri, newRot = self.listener.lookupTransform("/odom_combined", "/shelf_frame", rospy.Time(0))
+					newL, newRL = self.listener.lookupTransform("/base_laser_link", "/left_leg", rospy.Time(0))
+					newR, newRR = self.listener.lookupTransform("/base_laser_link", "/right_leg", rospy.Time(0))
+				except:
+					continue
+					
+			if self.reCalibration and math.sqrt((newOri[0]-self.priorOri[0]) **2 + (newOri[1]-self.priorOri[1]) **2) < 0.1:
+				print 'reCalibrated!'
+				self.calibrated = True
+				self.reCalibration = False
+
 			if not self.calibrated and ask:
 				answer = raw_input("Is the current shelf pose estimation good? (y/n)")
 
 				if answer == 'y' or answer == 'yes':
 					self.calibrated = True
 					ask = False
+					self.priorAvailable = True
 					print colored('human calibration of shelf pose is done', 'yellow', 'on_white')
 					print colored('prior position of the shelf is: X = %4f, Y = %4f' % (shelfOri[0], shelfOri[1]), 'yellow', 'on_white')
-					self.priorOri = shelfOri
-					self.priorRot = shelfRot
-					self.rate = rospy.Rate(1000)
+					self.priorOri = newOri
+					self.priorRot = newRot
+					self.priorLeft = legs[0]
+					self.priorRight = legs[1]
+					self.rate = rospy.Rate(100)
+					while True:
+						try:
+							self.odomL, odomRL = self.listener.lookupTransform("/odom_combined", "/left_leg", rospy.Time(0))
+							self.odomR, odomRR = self.listener.lookupTransform("/odom_combined", "/right_leg", rospy.Time(0))
+							break
+						except:
+							rospy.sleep(0.4)
+
+			
+
+			# check in the odometry frame
+			if self.calibrated:
+				if math.sqrt((newOri[0]-self.priorOri[0]) **2 + (newOri[1]-self.priorOri[1]) **2) > 0.1:
+					print colored('something is wrong with shelf pose estimation!!!!!!!!!! RECALIBRATING', 'red', attrs=['blink'])
+					self.calibrated = False
+					self.reCalibration = True
+				else:
+					self.br.sendTransform((shelfOri[0], shelfOri[1], 0),
+				                     tf.transformations.quaternion_from_euler(0, 0, shelfRot),
+				                     rospy.Time.now(),
+				                     "/shelf_frame",     # child
+				                     "/base_laser_link"      # parent
+				                     )
+
+					self.br.sendTransform((legs[0][0], legs[0][1], 0), \
+			                         tf.transformations.quaternion_from_euler(0, 0, shelfRot), \
+			                         rospy.Time.now(),\
+			                         "/left_leg",   \
+			                         "/base_laser_link")
+
+					self.br.sendTransform((legs[1][0], legs[1][1], 0), \
+			                         tf.transformations.quaternion_from_euler(0, 0, shelfRot), \
+			                         rospy.Time.now(),\
+			                         "/right_leg",   \
+			                         "/base_laser_link")
+			if self.priorAvailable:
+					self.br.sendTransform(self.odomL, \
+			                         tf.transformations.quaternion_from_euler(0, 0, shelfRot), \
+			                         rospy.Time.now(),\
+			                         "/odomL",   \
+			                         "/odom_combined")
+
+					self.br.sendTransform(self.odomR, \
+			                         tf.transformations.quaternion_from_euler(0, 0, shelfRot), \
+			                         rospy.Time.now(),\
+			                         "/odomR",   \
+			                         "/odom_combined")			
+			
 
 
 

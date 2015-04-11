@@ -16,8 +16,8 @@ class baseMove:
 		self.base_pub = rospy.Publisher('/base_controller/command', Twist)
 		self.listener = tf.TransformListener()
 		self.verbose = verbose
-		self.posTolerance = 0.001
-		self.angTolerance = 0.001
+		self.posTolerance = 4
+		self.angTolerance = 1
 		self.linearGain = 10
 		self.angularGain = 10
 		self.comm = rospy.Rate(100)
@@ -49,6 +49,16 @@ class baseMove:
 				l = LA.norm([x_diff, y_diff])
 				s.linear.x = l * cos(r) * self.linearGain
 				s.linear.y = l * sin(r) * self.linearGain
+				tmp = LA.norm([s.linear.x, s.linear.y])
+
+				if tmp < 0.04:
+					s.linear.x = s.linear.x * (0.04 / tmp)
+					s.linear.y = s.linear.y * (0.04 / tmp)
+
+				if tmp > 0.1:
+					s.linear.x = s.linear.x * (0.1 / tmp)
+					s.linear.y = s.linear.y * (0.1 / tmp)
+
 				self.base_pub.publish(s)
 				if LA.norm([x_diff, y_diff]) < self.posTolerance:
 					if self.verbose:
@@ -68,6 +78,12 @@ class baseMove:
 					print 'theta: %4f, angle: %4f' % (theta, angle)
 				z_diff = (angle - theta)
 				s.angular.z = z_diff * self.angularGain
+
+				if abs(s.angular.z) > 0.4:
+					s.angular.z = 0.4 * (s.angular.z)/abs(s.angular.z)
+				elif abs(s.angular.z) < 0.1:
+					s.angular.z = 0.1 * (s.angular.z)/abs(s.angular.z)
+				
 				self.base_pub.publish(s)
 				if abs(z_diff) < self.angTolerance:
 					if self.verbose:
@@ -93,9 +109,24 @@ class baseMove:
 				l = LA.norm([x_diff, y_diff])
 				s.linear.x = l * cos(r) * self.linearGain
 				s.linear.y = l * sin(r) * self.linearGain
-				
+				tmp = LA.norm([s.linear.x, s.linear.y])
+
+				if tmp < 0.04:
+					s.linear.x = s.linear.x * (0.04 / tmp)
+					s.linear.y = s.linear.y * (0.04 / tmp)
+
+				if tmp > 0.1:
+					s.linear.x = s.linear.x * (0.1 / tmp)
+					s.linear.y = s.linear.y * (0.1 / tmp)
+
 				z_diff = (angle - theta)
 				s.angular.z = z_diff * self.angularGain
+
+				if abs(s.angular.z) > 0.2:
+					s.angular.z = 0.2 * (s.angular.z)/abs(s.angular.z)
+				elif abs(s.angular.z) < 0.06:
+					s.angular.z = 0.06 * (s.angular.z)/abs(s.angular.z)
+
 
 				self.base_pub.publish(s)
 				if LA.norm([x_diff, y_diff]) < self.posTolerance and abs(z_diff) < self.angTolerance:
