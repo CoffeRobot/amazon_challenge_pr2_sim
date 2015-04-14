@@ -81,6 +81,7 @@ class baseScan:
 				radius.append(math.sqrt((x[i]-self.priorRight[0])**2 + (y[i] - self.priorRight[1])**2))
 			n2 = radius.index(min(radius))
 
+
 			self.leg1 = [x[n1], y[n1]]
 			self.leg2 = [x[n2], y[n2]]
 		else:

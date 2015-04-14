@@ -25,8 +25,9 @@ class baseMove:
 		self.linearGain = 10
 		self.angularGain = 10
 		self.comm = rospy.Rate(100)
-		self.linearTwistBound = twistBound(0.04, 0.1)
-		self.angularTwistBound = twistBound(0.1,0.4)
+		self.linearTwistBound = twistBound(0.04, 0.14)
+		self.angularTwistBound = twistBound(0.09,0.4)
+		self.refFrame = 'shelf_frame'
 
 	def setPosTolerance(self, t):
 		self.posTolerance = t
@@ -44,7 +45,7 @@ class baseMove:
 		s = Twist()
 		while True:
 			try:
-				(trans,rot) = self.listener.lookupTransform("/odom_combined", "/base_link", rospy.Time(0))
+				(trans,rot) = self.listener.lookupTransform("/shelf_frame", "/base_link", rospy.Time(0))
 				theta = tf.transformations.euler_from_quaternion(rot)[2]
 				x_diff = (position[0] - trans[0])
 				y_diff = (position[1] - trans[1])
@@ -78,8 +79,10 @@ class baseMove:
 		s = Twist()
 		while True:
 			try:
-				(trans,rot) = self.listener.lookupTransform("/odom_combined", "/base_link", rospy.Time(0))
+				(trans,rot) = self.listener.lookupTransform("/shelf_frame", "/base_link", rospy.Time(0))
 				theta = tf.transformations.euler_from_quaternion(rot)[2]
+				
+
 				if self.verbose:
 					print 'theta: %4f, angle: %4f' % (theta, angle)
 				z_diff = (angle - theta)
@@ -104,7 +107,7 @@ class baseMove:
 		s = Twist()
 		while True:
 			try:
-				(trans,rot) = self.listener.lookupTransform("/odom_combined", "/base_link", rospy.Time(0))
+				(trans,rot) = self.listener.lookupTransform("/shelf_frame", "/base_link", rospy.Time(0))
 				theta = tf.transformations.euler_from_quaternion(rot)[2]
 				x_diff = (position[0] - trans[0])
 				y_diff = (position[1] - trans[1])
