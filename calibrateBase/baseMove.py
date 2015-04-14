@@ -6,11 +6,15 @@ from geometry_msgs.msg import Twist
 import tf
 from numpy import linalg as LA
 from math import *
+from collections import namedtuple
 
 
 # assuming there is already a ros node, do not init one here
 
 # P control is sufficient for this function
+
+twistBound = namedtuple('twistBound', ['upper', 'lower'])
+
 class baseMove:
 	def __init__(self, verbose=False):
 		self.base_pub = rospy.Publisher('/base_controller/command', Twist)
@@ -21,6 +25,8 @@ class baseMove:
 		self.linearGain = 10
 		self.angularGain = 10
 		self.comm = rospy.Rate(100)
+		self.linearTwistBound = twistBound(0.04, 0.1)
+		self.angularTwistBound = twistBound(0.1,0.4)
 
 	def setPosTolerance(self, t):
 		self.posTolerance = t
@@ -51,13 +57,13 @@ class baseMove:
 				s.linear.y = l * sin(r) * self.linearGain
 				tmp = LA.norm([s.linear.x, s.linear.y])
 
-				if tmp < 0.04:
-					s.linear.x = s.linear.x * (0.04 / tmp)
-					s.linear.y = s.linear.y * (0.04 / tmp)
+				if tmp < self.linearTwistBound.lower:
+					s.linear.x = s.linear.x * (self.linearTwistBound.lower / tmp)
+					s.linear.y = s.linear.y * (self.linearTwistBound.lower / tmp)
 
-				if tmp > 0.1:
-					s.linear.x = s.linear.x * (0.1 / tmp)
-					s.linear.y = s.linear.y * (0.1 / tmp)
+				if tmp > self.linearTwistBound.upper:
+					s.linear.x = s.linear.x * (self.linearTwistBound.upper / tmp)
+					s.linear.y = s.linear.y * (self.linearTwistBound.upper / tmp)
 
 				self.base_pub.publish(s)
 				if LA.norm([x_diff, y_diff]) < self.posTolerance:
@@ -79,10 +85,10 @@ class baseMove:
 				z_diff = (angle - theta)
 				s.angular.z = z_diff * self.angularGain
 
-				if abs(s.angular.z) > 0.4:
-					s.angular.z = 0.4 * (s.angular.z)/abs(s.angular.z)
-				elif abs(s.angular.z) < 0.1:
-					s.angular.z = 0.1 * (s.angular.z)/abs(s.angular.z)
+				if abs(s.angular.z) > self.angularTwistBound.upper:
+					s.angular.z = self.angularTwistBound.upper * (s.angular.z)/abs(s.angular.z)
+				elif abs(s.angular.z) < self.angularTwistBound.lower:
+					s.angular.z = self.angularTwistBound.lower * (s.angular.z)/abs(s.angular.z)
 				
 				self.base_pub.publish(s)
 				if abs(z_diff) < self.angTolerance:
@@ -111,21 +117,21 @@ class baseMove:
 				s.linear.y = l * sin(r) * self.linearGain
 				tmp = LA.norm([s.linear.x, s.linear.y])
 
-				if tmp < 0.04:
-					s.linear.x = s.linear.x * (0.04 / tmp)
-					s.linear.y = s.linear.y * (0.04 / tmp)
+				if tmp < self.linearTwistBound.lower:
+					s.linear.x = s.linear.x * (self.linearTwistBound.lower / tmp)
+					s.linear.y = s.linear.y * (self.linearTwistBound.lower / tmp)
 
-				if tmp > 0.1:
-					s.linear.x = s.linear.x * (0.1 / tmp)
-					s.linear.y = s.linear.y * (0.1 / tmp)
+				if tmp > self.linearTwistBound.upper:
+					s.linear.x = s.linear.x * (self.linearTwistBound.upper / tmp)
+					s.linear.y = s.linear.y * (self.linearTwistBound.upper / tmp)
 
 				z_diff = (angle - theta)
 				s.angular.z = z_diff * self.angularGain
 
-				if abs(s.angular.z) > 0.2:
-					s.angular.z = 0.2 * (s.angular.z)/abs(s.angular.z)
-				elif abs(s.angular.z) < 0.06:
-					s.angular.z = 0.06 * (s.angular.z)/abs(s.angular.z)
+				if abs(s.angular.z) > self.angularTwistBound.upper:
+					s.angular.z = self.angularTwistBound.upper * (s.angular.z)/abs(s.angular.z)
+				elif abs(s.angular.z) < self.angularTwistBound.lower:
+					s.angular.z = self.angularTwistBound.lower * (s.angular.z)/abs(s.angular.z)
 
 
 				self.base_pub.publish(s)
