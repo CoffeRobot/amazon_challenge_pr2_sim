@@ -84,7 +84,6 @@ class superDetector(object):
 
 
 if __name__ == '__main__':
-    rospy.init_node('detector')
-    pubDetector = superDetector('detector')
+    pubDetector = superDetector('amazon_detector')
     pubDetector.my_pub()
     rospy.spin()
