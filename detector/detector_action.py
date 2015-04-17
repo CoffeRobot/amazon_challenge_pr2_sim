@@ -11,6 +11,7 @@ from std_msgs.msg import String
 import sys
 
 import tf
+import threading
 
 
 class superDetector(object):
@@ -25,14 +26,18 @@ class superDetector(object):
             execute_cb=self.receive_update, auto_start = False)
 
         self._as.start()
-        self.pub_rate = rospy.Rate(30)
+        self.pub_rate = rospy.Rate(50)
         self.listener = tf.TransformListener()
         rospy.Subscriber("/amazon_next_task", String, self.get_task)
         self._item = ""
         self._bin = ""
-        self.trials = 100
+        self.trials = 50
+        self.obsN = 10
         self.br = tf.TransformBroadcaster()
         self.tp = []
+        self.vThresh = 0.1
+        self.updating = False
+        self.lock = threading.Lock()
 
     def flush(self):
         self._item = ""
@@ -42,9 +47,12 @@ class superDetector(object):
 
 
     def my_pub(self):
+
+
+        if self.updating:
+            return
         # publish info to the console for the user
         rospy.loginfo('Starting Detecting')
-
 
 
         while not rospy.is_shutdown():
@@ -69,18 +77,67 @@ class superDetector(object):
         self._item = words[1]
 
     def receive_update(self,goal):
+        self.lock.acquire()
         rospy.loginfo('Goal Received')
-        while not rospy.is_shutdown():
-            try:
-                self.tp = self.listener.lookupTransform('/base_link', '/' + self._item, rospy.Time(0))
-                rospy.loginfo('object pose UPDATED')
-                self._feedback.status = 0 # a status 0 means that there are still objects in the list
-                self._result.status = self._feedback.status
-                self._as.set_succeeded(self._result)
-                break
-            except:
-                continue
+        poseAccumulation = []
+        self.updating = True
 
+
+        self.obsAccumulation = []
+        enough = False
+        for i in range(self.trials):
+            while not rospy.is_shutdown():
+                rospy.sleep(0.5)
+                try:
+                    self.tp = self.listener.lookupTransform('/base_link', '/' + self._item, rospy.Time(0))
+                    rospy.loginfo('object pose UPDATED')
+                    self.obsAccumulation.append(self.tp[0])
+                    if len(self.obsAccumulation) == self.obsN:
+                        enough = True
+                        break
+                except:
+                    continue
+            if enough:
+                break
+
+        good = self.validate()
+
+        if not enough or not good:
+            self._feedback.status = 1 # 0 means ok or 1 means failure
+            self._result.status = self._feedback.status
+            self._as.set_succeeded(self._result)
+        else:
+            self._feedback.status = 0 # 0 means ok or 1 means failure
+            self._result.status = self._feedback.status
+            self._as.set_succeeded(self._result)
+
+        self.updating = False
+        self.lock.release()
+            
+            
+
+
+
+    def validate(self):
+        Xs = [t[0] for t in self.obsAccumulation]
+        Ys = [t[1] for t in self.obsAccumulation]
+        Zs = [t[2] for t in self.obsAccumulation]
+
+        xVariance = self.variance(Xs)
+        yVariance = self.variance(Ys)
+        zVariance = self.variance(Zs)
+
+        if xVariance > self.vThresh or yVariance > self.vThresh or zVariance > self.vThresh:
+            return False
+        else:
+            return True
+
+    def variance(self, l):
+        lMean = sum(l) / len(l)
+        lVariance = 0
+        for x in l:
+            lVariance += (x - lMean)**2
+        return lVariance / len(l)
 
 
 if __name__ == '__main__':

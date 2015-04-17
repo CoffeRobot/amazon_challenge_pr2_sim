@@ -68,12 +68,13 @@ class BTAction(object):
                 continue
             # curr_pose = self.left_arm.get_current_pose()
 
-            target_pose = kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector( tp[0][0] - 0.15, tp[0][1], tp[0][2]))
+            right_y = 0.02
 
             arm_now = self.get_arm_to_move()
 
             if arm_now == 'right_arm':
                 try:
+                    target_pose = kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector( tp[0][0] - 0.15, tp[0][1] - right_y, tp[0][2]))
                     pr2_moveit_utils.go_tool_frame(self.right_arm, target_pose, base_frame_id='base_link', ft=False,
                                                    wait=True)
                 except:
@@ -81,6 +82,7 @@ class BTAction(object):
                     continue
             else:
                 try:
+                    target_pose = kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector( tp[0][0] - 0.15, tp[0][1], tp[0][2]))
                     pr2_moveit_utils.go_tool_frame(self.left_arm, target_pose, base_frame_id='base_link', ft=False,
                                                    wait=True)
                 except:
@@ -90,9 +92,9 @@ class BTAction(object):
 
             if arm_now == 'right_arm':
                 rospy.loginfo('grasping with right arm')
-                reaching = kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector( tp[0][0] - 0.04, tp[0][1], tp[0][2]))
-                lifting = kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector( tp[0][0] - 0.04, tp[0][1], tp[0][2] + 0.04 ))
-                retreat = kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector( tp[0][0] - 0.15, tp[0][1], tp[0][2] + 0.04))
+                reaching = kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector( tp[0][0] - 0.04, tp[0][1] - right_y, tp[0][2]))
+                lifting = kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector( tp[0][0] - 0.04, tp[0][1] - right_y, tp[0][2] + 0.04 ))
+                retreat = kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector( tp[0][0] - 0.15, tp[0][1] - right_y, tp[0][2] + 0.04))
                 self.go_right_gripper(10, 40)
                 rospy.sleep(4)
 
@@ -100,6 +102,7 @@ class BTAction(object):
                     pr2_moveit_utils.go_tool_frame(self.right_arm, reaching, base_frame_id='base_link', ft=False, wait=True)
                 except:
                     pass
+                
                 self.go_right_gripper(0, 40)
                 rospy.sleep(4)
 
@@ -108,12 +111,11 @@ class BTAction(object):
                 except:
                     pass
 
-                self.go_right_gripper(10, 40)
-                rospy.sleep(2)
                 try:
                     pr2_moveit_utils.go_tool_frame(self.right_arm, retreat, base_frame_id='base_link', ft=False, wait=True)
                 except:
                     pass
+                rospy.sleep(2)
                 finished = True
             else:
                 rospy.loginfo('grasping with left arm')
@@ -127,6 +129,7 @@ class BTAction(object):
                     pr2_moveit_utils.go_tool_frame(self.left_arm, reaching, base_frame_id='base_link', ft=False, wait=True)
                 except:
                     pass
+                
                 self.go_left_gripper(0, 40)
                 rospy.sleep(4)
 
@@ -135,13 +138,11 @@ class BTAction(object):
                 except:
                     pass
                 
-                rospy.sleep(4)
-                self.go_left_gripper(10, 40)
-                rospy.sleep(2)
                 try:
                     pr2_moveit_utils.go_tool_frame(self.left_arm, retreat, base_frame_id='base_link', ft=False, wait=True)
                 except:
                     pass
+                rospy.sleep(2)
                 finished = True
 
 
