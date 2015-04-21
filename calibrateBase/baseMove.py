@@ -58,7 +58,7 @@ class baseMove:
 				s.linear.y = l * sin(r) * self.linearGain
 				tmp = LA.norm([s.linear.x, s.linear.y])
 
-				if tmp < self.linearTwistBound.lower:
+				if tmp <= self.linearTwistBound.lower:
 					s.linear.x = s.linear.x * (self.linearTwistBound.lower / tmp)
 					s.linear.y = s.linear.y * (self.linearTwistBound.lower / tmp)
 
@@ -103,6 +103,9 @@ class baseMove:
 			self.comm.sleep()
 
 
+	'''
+	The go() method is not stable in practice use to constant rotation of wheels, DO NOT use it.
+	'''
 	def go(self, position, angle):
 		s = Twist()
 		while True:
