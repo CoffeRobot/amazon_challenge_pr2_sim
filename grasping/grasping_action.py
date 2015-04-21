@@ -26,10 +26,16 @@ class BTAction(object):
         self._as = actionlib.SimpleActionServer(self._action_name, amazon_challenge_bt_actions.msg.BTAction,
                                                 execute_cb=self.execute_cb, auto_start=False)
         self._as.start()
-        self.pub_grasped = rospy.Publisher('object_grasped', String, queue_size=10)
+        self.pub_grasped = rospy.Publisher('object_grasped', String, queue_size=1)
         self.pub_rate = rospy.Rate(30)
-        self.left_arm = moveit_commander.MoveGroupCommander('left_arm')
-        self.right_arm = moveit_commander.MoveGroupCommander('right_arm')
+        while not rospy.is_shutdown():
+            try:
+                self.left_arm = moveit_commander.MoveGroupCommander('left_arm')
+                self.right_arm = moveit_commander.MoveGroupCommander('right_arm')
+                break
+            except:
+                pass
+
         self.listener = tf.TransformListener()
         moveit_commander.roscpp_initialize(sys.argv)
         rospy.Subscriber("/amazon_next_task", String, self.get_task)
@@ -74,7 +80,7 @@ class BTAction(object):
 
             if arm_now == 'right_arm':
                 try:
-                    target_pose = kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector( tp[0][0] - 0.15, tp[0][1] - right_y, tp[0][2]))
+                    target_pose = kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector( tp[0][0] - 0.2, tp[0][1] - right_y, tp[0][2]))
                     pr2_moveit_utils.go_tool_frame(self.right_arm, target_pose, base_frame_id='base_link', ft=False,
                                                    wait=True)
                 except:
@@ -82,7 +88,7 @@ class BTAction(object):
                     continue
             else:
                 try:
-                    target_pose = kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector( tp[0][0] - 0.15, tp[0][1], tp[0][2]))
+                    target_pose = kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector( tp[0][0] - 0.2, tp[0][1], tp[0][2]))
                     pr2_moveit_utils.go_tool_frame(self.left_arm, target_pose, base_frame_id='base_link', ft=False,
                                                    wait=True)
                 except:

@@ -25,7 +25,7 @@ class baseScan:
 		self.leg1 = []
 		self.leg2 = []
 		self.br = tf.TransformBroadcaster()
-		self.rate = rospy.Rate(4.0)
+		self.rate = rospy.Rate(1.0)
 		self.calibrated = False
 		self.reCalibration = False
 		self.priorOri = []
@@ -34,6 +34,7 @@ class baseScan:
 		self.odomL = []
 		self.odomR = []
 		self.priorAvailable = False
+		self.accumulations = 40
 
 
 
@@ -43,7 +44,7 @@ class baseScan:
 	def refreshRangeData(self):
 		self.rangeData = LaserScan() # flush
 		while len(self.rangeData.ranges) == 0:
-			rospy.sleep(0.1)
+			rospy.sleep(0.04)
 
 	def getStatus(self):
 		return self.calibrated
@@ -62,7 +63,7 @@ class baseScan:
 				break
 		return self.pc
 
-	def findLegs(self):
+	def findLegsOnce(self):
 		pc = self.getCloud()
 		x = []
 		y= []
@@ -82,8 +83,8 @@ class baseScan:
 			n2 = radius.index(min(radius))
 
 
-			self.leg1 = [x[n1], y[n1]]
-			self.leg2 = [x[n2], y[n2]]
+			leg1 = [x[n1], y[n1]]
+			leg2 = [x[n2], y[n2]]
 		else:
 			# Assuming there is nothing between the robot and the shelf
 			for i in range(len(pc)):
@@ -102,9 +103,34 @@ class baseScan:
 					radius2.append(math.sqrt(x2[i]**2 + y2[i]**2))
 			n2 = radius2.index(min(radius2))
 
-			self.leg1 = [x[n], y[n]]
-			self.leg2 = [x2[n2], y2[n2]]
+			leg1 = [x[n], y[n]]
+			leg2 = [x2[n2], y2[n2]]
+		return [leg1, leg2] # left, right
+
+	def findLegs(self):
+		L1x = 0
+		L1y = 0
+		L2x = 0
+		L2y = 0
+		for i in range(self.accumulations):
+			legs = self.findLegsOnce()
+			L1x += legs[0][0]
+			L1y += legs[0][1]
+			L2x += legs[1][0]
+			L2y += legs[1][1]
+
+		L1x /= self.accumulations
+		L1y /= self.accumulations
+		L2x /= self.accumulations
+		L2y /= self.accumulations
+
+
+		self.leg1 = [L1x, L1y]
+		self.leg2 = [L2x, L2y]
 		return [self.leg1, self.leg2] # left, right
+
+
+
 
 	def getShelfFrame(self):
 		# with respect to the frame of /base_scan
@@ -221,6 +247,93 @@ class baseScan:
 			                         rospy.Time.now(),\
 			                         "/right_leg",   \
 			                         "/base_laser_link")
+
+					self.br.sendTransform((0, shelfOri[1] + 0.105, 1.21),
+				                     tf.transformations.quaternion_from_euler(0, 0, shelfRot),
+				                     rospy.Time.now(),
+				                     "/shelf_bin_A",     # child
+				                     "/shelf_frame"      # parent
+				                     )
+
+					self.br.sendTransform((0, shelfOri[1] - 0.205, 1.21),
+				                     tf.transformations.quaternion_from_euler(0, 0, shelfRot),
+				                     rospy.Time.now(),
+				                     "/shelf_bin_B",     # child
+				                     "/shelf_frame"      # parent
+				                     )
+
+					self.br.sendTransform((0, shelfOri[1] - 0.475, 1.21),
+				                     tf.transformations.quaternion_from_euler(0, 0, shelfRot),
+				                     rospy.Time.now(),
+				                     "/shelf_bin_C",     # child
+				                     "/shelf_frame"      # parent
+				                     )
+
+					self.br.sendTransform((0, shelfOri[1] + 0.105, 1),
+				                     tf.transformations.quaternion_from_euler(0, 0, shelfRot),
+				                     rospy.Time.now(),
+				                     "/shelf_bin_D",     # child
+				                     "/shelf_frame"      # parent
+				                     )
+
+					self.br.sendTransform((0, shelfOri[1] - 0.205, 1),
+				                     tf.transformations.quaternion_from_euler(0, 0, shelfRot),
+				                     rospy.Time.now(),
+				                     "/shelf_bin_E",     # child
+				                     "/shelf_frame"      # parent
+				                     )
+
+					self.br.sendTransform((0, shelfOri[1] - 0.475, 1),
+				                     tf.transformations.quaternion_from_euler(0, 0, shelfRot),
+				                     rospy.Time.now(),
+				                     "/shelf_bin_F",     # child
+				                     "/shelf_frame"      # parent
+				                     )
+
+					self.br.sendTransform((0, shelfOri[1] + 0.105, 0.78),
+				                     tf.transformations.quaternion_from_euler(0, 0, shelfRot),
+				                     rospy.Time.now(),
+				                     "/shelf_bin_G",     # child
+				                     "/shelf_frame"      # parent
+				                     )
+
+					self.br.sendTransform((0, shelfOri[1] - 0.205, 0.78),
+				                     tf.transformations.quaternion_from_euler(0, 0, shelfRot),
+				                     rospy.Time.now(),
+				                     "/shelf_bin_H",     # child
+				                     "/shelf_frame"      # parent
+				                     )
+
+					self.br.sendTransform((0, shelfOri[1] - 0.475, 0.78),
+				                     tf.transformations.quaternion_from_euler(0, 0, shelfRot),
+				                     rospy.Time.now(),
+				                     "/shelf_bin_I",     # child
+				                     "/shelf_frame"      # parent
+				                     )
+
+					self.br.sendTransform((0, shelfOri[1] + 0.105, 0.51),
+				                     tf.transformations.quaternion_from_euler(0, 0, shelfRot),
+				                     rospy.Time.now(),
+				                     "/shelf_bin_J",     # child
+				                     "/shelf_frame"      # parent
+				                     )
+
+					self.br.sendTransform((0, shelfOri[1] - 0.205, 0.51),
+				                     tf.transformations.quaternion_from_euler(0, 0, shelfRot),
+				                     rospy.Time.now(),
+				                     "/shelf_bin_K",     # child
+				                     "/shelf_frame"      # parent
+				                     )
+
+					self.br.sendTransform((0, shelfOri[1] - 0.475, 0.51),
+				                     tf.transformations.quaternion_from_euler(0, 0, shelfRot),
+				                     rospy.Time.now(),
+				                     "/shelf_bin_L",     # child
+				                     "/shelf_frame"      # parent
+				                     )
+
+
+
 			if self.priorAvailable:
 					self.br.sendTransform(self.odomL, \
 			                         tf.transformations.quaternion_from_euler(0, 0, shelfRot), \

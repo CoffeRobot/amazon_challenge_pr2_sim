@@ -23,7 +23,7 @@ class ArmPositionAction(object):
         self._as.start()
         self.pub_dropped = rospy.Publisher('object_dropped', String, queue_size=10)
         self.pub_rate = rospy.Rate(30)
-        slef._pr2 = MyPR2()
+        self._pr2 = MyPR2()
         self._pr2.load("dropping_dictionary.pr2")
         rospy.Subscriber("/amazon_next_task", String, self.get_task)
 

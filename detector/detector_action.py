@@ -113,8 +113,6 @@ class superDetector(object):
 
         self.updating = False
         self.lock.release()
-            
-            
 
 
 
