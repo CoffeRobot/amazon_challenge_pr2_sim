@@ -14,7 +14,8 @@ import tf
 import PyKDL as kdl
 import pr2_moveit_utils.pr2_moveit_utils as pr2_moveit_utils
 from pr2_controllers_msgs.msg import Pr2GripperCommandActionGoal
-
+from geometry_msgs.msg import Pose, PoseStamped
+from tf_conversions import posemath
 
 class BTAction(object):
     # create messages that are used to publish feedback/result
@@ -26,7 +27,8 @@ class BTAction(object):
         self._as = actionlib.SimpleActionServer(self._action_name, amazon_challenge_bt_actions.msg.BTAction,
                                                 execute_cb=self.execute_cb, auto_start=False)
         self._as.start()
-        self.pub_grasped = rospy.Publisher('object_grasped', String, queue_size=1)
+        self.pub_grasped = rospy.Publisher('object_grasped', String)
+        self.pub_pose = rospy.Publisher('hand_pose', PoseStamped)
         self.pub_rate = rospy.Rate(30)
         while not rospy.is_shutdown():
             try:
@@ -43,13 +45,31 @@ class BTAction(object):
         self._bin = ""
         self.l_gripper_pub = rospy.Publisher('/l_gripper_controller/gripper_action/goal', Pr2GripperCommandActionGoal)
         self.r_gripper_pub = rospy.Publisher('/r_gripper_controller/gripper_action/goal', Pr2GripperCommandActionGoal)
-        self.pre_distance = -0.2
+        self.pre_distance = -0.1
         self.ft_switch = True
         self.lifting_height = 0.04
 
     def flush(self):
         self._item = ""
         self._bin = ""
+
+    def transformPoseToRobotFrame(self, planPose, planner_frame):
+
+        pre_pose_stamped = PoseStamped()
+        pre_pose_stamped.pose = posemath.toMsg(planPose)
+        pre_pose_stamped.header.stamp = rospy.Time()
+        pre_pose_stamped.header.frame_id = planner_frame
+
+        while not rospy.is_shutdown():
+            try:
+                robotPose = self.listener.transformPose('/base_link', pre_pose_stamped)
+                break
+            except:
+                pass
+
+        self.pub_pose.publish(robotPose)
+        return robotPose
+
 
 
 
@@ -75,13 +95,12 @@ class BTAction(object):
                 break
             except:
                 pass
-        # curr_pose = self.left_arm.get_current_pose()
 
 
         '''
         PRE-GRASPING
         '''
-        planner_frame = self._item + "_detector"
+        planner_frame = '/' + self._item + "_detector"
         arm_now = self.get_arm_to_move()
 
 
@@ -91,21 +110,23 @@ class BTAction(object):
             self.open_left_gripper()
 
         pre_pose = kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector( self.pre_distance, 0, 0))
+        pre_pose_robot = self.transformPoseToRobotFrame(pre_pose, planner_frame)
+
+
+
 
         if arm_now == 'right_arm':
             try:
-                pr2_moveit_utils.go_tool_frame(self.right_arm, pre_pose, base_frame_id = planner_frame, ft=self.ft_switch,
+                pr2_moveit_utils.go_tool_frame(self.right_arm, pre_pose_robot.pose, base_frame_id = pre_pose_robot.header.frame_id, ft=self.ft_switch,
                                                wait=True)
             except:
-                self.flush()
                 self.set_status('FAILURE')
                 return
         else:
             try:
-                pr2_moveit_utils.go_tool_frame(self.left_arm, pre_pose, base_frame_id = planner_frame, ft=self.ft_switch,
+                pr2_moveit_utils.go_tool_frame(self.left_arm, pre_pose_robot.pose, base_frame_id = pre_pose_robot.frame_id, ft=self.ft_switch,
                                                wait=True)
             except:
-                self.flush()
                 self.set_status('FAILURE')
                 return
 

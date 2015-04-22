@@ -32,10 +32,10 @@ class superDetector(object):
         self.pub_rate = rospy.Rate(50)
         self.listener = tf.TransformListener()
         rospy.Subscriber("/amazon_next_task", String, self.get_task)
-        self._item = ""
-        self._bin = ""
-        self.trials = 50
-        self.obsN = 10
+        self._item = ''
+        self._bin = ''
+        self.trials = 10
+        self.obsN = 4
         self.br = tf.TransformBroadcaster()
         self.tp = []
         self.vThresh = 0.1
@@ -51,7 +51,6 @@ class superDetector(object):
 
     def my_pub(self):
 
-
         if self.updating:
             return
         # publish info to the console for the user
@@ -64,7 +63,7 @@ class superDetector(object):
             try:
                 self.br.sendTransform(self.tp[0], self.tp[1], rospy.Time.now(),\
                                          "/" + self._item + "_detector",   \
-                                         "/base_link")
+                                         '/' + 'shelf_' + self._bin)
                 self.pub_rate.sleep()
             except:
                 continue
@@ -90,9 +89,9 @@ class superDetector(object):
         enough = False
         for i in range(self.trials):
             while not rospy.is_shutdown():
-                rospy.sleep(0.5)
+                rospy.sleep(0.01)
                 try:
-                    self.tp = grasping_lib.getGraspFrame(self.listener, self._bin, self._item)
+                    self.tp = grasping_lib.getGraspFrame(self.listener, '/' + 'shelf_' + self._bin, '/' + self._item)
                     # self.tp = self.listener.lookupTransform('/base_link', '/' + self._item, rospy.Time(0))
                     rospy.loginfo('object pose UPDATED')
                     self.obsAccumulation.append(self.tp[0])
