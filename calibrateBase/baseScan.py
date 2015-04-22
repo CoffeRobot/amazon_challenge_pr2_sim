@@ -25,7 +25,7 @@ class baseScan:
 		self.leg1 = []
 		self.leg2 = []
 		self.br = tf.TransformBroadcaster()
-		self.rate = rospy.Rate(1.0)
+		self.rate = rospy.Rate(100.0)
 		self.calibrated = False
 		self.reCalibration = False
 		self.priorOri = []
@@ -34,7 +34,7 @@ class baseScan:
 		self.odomL = []
 		self.odomR = []
 		self.priorAvailable = False
-		self.accumulations = 40
+		self.newObsWeight = 0.1
 
 
 
@@ -108,25 +108,28 @@ class baseScan:
 		return [leg1, leg2] # left, right
 
 	def findLegs(self):
+		'''
+		accumulate new observations
+		'''
 		L1x = 0
 		L1y = 0
 		L2x = 0
 		L2y = 0
-		for i in range(self.accumulations):
-			legs = self.findLegsOnce()
-			L1x += legs[0][0]
-			L1y += legs[0][1]
-			L2x += legs[1][0]
-			L2y += legs[1][1]
 
-		L1x /= self.accumulations
-		L1y /= self.accumulations
-		L2x /= self.accumulations
-		L2y /= self.accumulations
+		legs = self.findLegsOnce()
 
+		if legs[0][1] < legs[1][1]:
+			legs[0], legs[1] = legs[1], legs[0]
 
-		self.leg1 = [L1x, L1y]
-		self.leg2 = [L2x, L2y]
+		if self.calibrated:
+			self.leg1[0] = self.leg1[0] * (1-self.newObsWeight) + legs[0][0] * self.newObsWeight
+			self.leg1[1] = self.leg1[1] * (1-self.newObsWeight) + legs[0][1] * self.newObsWeight
+			self.leg2[0] = self.leg2[0] * (1-self.newObsWeight) + legs[1][0] * self.newObsWeight
+			self.leg2[1] = self.leg2[1] * (1-self.newObsWeight) + legs[1][1] * self.newObsWeight
+		else:
+			self.leg1 = legs[0]
+			self.leg2 = legs[1]
+
 		return [self.leg1, self.leg2] # left, right
 
 

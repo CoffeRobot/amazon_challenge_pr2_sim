@@ -43,6 +43,9 @@ class BTAction(object):
         self._bin = ""
         self.l_gripper_pub = rospy.Publisher('/l_gripper_controller/gripper_action/goal', Pr2GripperCommandActionGoal)
         self.r_gripper_pub = rospy.Publisher('/r_gripper_controller/gripper_action/goal', Pr2GripperCommandActionGoal)
+        self.pre_distance = -0.2
+        self.ft_switch = True
+        self.lifting_height = 0.04
 
     def flush(self):
         self._item = ""
@@ -55,114 +58,143 @@ class BTAction(object):
         # publish info to the console for the user
         rospy.loginfo('Starting Grasping')
 
-        finished = False
         # start executing the action
+        # check that preempt has not been requested by the client
+        if self._as.is_preempt_requested():
+            rospy.loginfo('Action Halted')
+            self._as.set_preempted()
+            return
+
+        rospy.loginfo('Executing Grasping')
+
+
         while not rospy.is_shutdown():
-            # check that preempt has not been requested by the client
-            if self._as.is_preempt_requested():
-                rospy.loginfo('Action Halted')
-                self._as.set_preempted()
-                success = False
-                break
-
-            rospy.loginfo('Executing Grasping')
-
             try:
                 tp = self.listener.lookupTransform('/base_link', "/" + self._item + "_detector", rospy.Time(0))
                 rospy.loginfo('got new object pose')
-            except:
-                continue
-            # curr_pose = self.left_arm.get_current_pose()
-
-            right_y = 0.02
-
-            arm_now = self.get_arm_to_move()
-
-            if arm_now == 'right_arm':
-                try:
-                    target_pose = kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector( tp[0][0] - 0.2, tp[0][1] - right_y, tp[0][2]))
-                    pr2_moveit_utils.go_tool_frame(self.right_arm, target_pose, base_frame_id='base_link', ft=False,
-                                                   wait=True)
-                except:
-                    rospy.loginfo('exception in reaching motion')
-                    continue
-            else:
-                try:
-                    target_pose = kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector( tp[0][0] - 0.2, tp[0][1], tp[0][2]))
-                    pr2_moveit_utils.go_tool_frame(self.left_arm, target_pose, base_frame_id='base_link', ft=False,
-                                                   wait=True)
-                except:
-                    rospy.loginfo('exception in reaching motion')
-                    continue
-
-
-            if arm_now == 'right_arm':
-                rospy.loginfo('grasping with right arm')
-                reaching = kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector( tp[0][0] - 0.04, tp[0][1] - right_y, tp[0][2]))
-                lifting = kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector( tp[0][0] - 0.04, tp[0][1] - right_y, tp[0][2] + 0.04 ))
-                retreat = kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector( tp[0][0] - 0.15, tp[0][1] - right_y, tp[0][2] + 0.04))
-                self.go_right_gripper(10, 40)
-                rospy.sleep(4)
-
-                try:
-                    pr2_moveit_utils.go_tool_frame(self.right_arm, reaching, base_frame_id='base_link', ft=False, wait=True)
-                except:
-                    pass
-                
-                self.go_right_gripper(0, 40)
-                rospy.sleep(4)
-
-                try:
-                    pr2_moveit_utils.go_tool_frame(self.right_arm, lifting, base_frame_id='base_link', ft=False, wait=True)
-                except:
-                    pass
-
-                try:
-                    pr2_moveit_utils.go_tool_frame(self.right_arm, retreat, base_frame_id='base_link', ft=False, wait=True)
-                except:
-                    pass
-                rospy.sleep(2)
-                finished = True
-            else:
-                rospy.loginfo('grasping with left arm')
-                reaching = kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector( tp[0][0] - 0.04, tp[0][1], tp[0][2]))
-                lifting = kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector( tp[0][0] - 0.04, tp[0][1], tp[0][2] + 0.04))
-                retreat = kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector( tp[0][0] - 0.15, tp[0][1], tp[0][2] + 0.04))
-                self.go_left_gripper(10, 40)
-                rospy.sleep(4)
-
-                try:
-                    pr2_moveit_utils.go_tool_frame(self.left_arm, reaching, base_frame_id='base_link', ft=False, wait=True)
-                except:
-                    pass
-                
-                self.go_left_gripper(0, 40)
-                rospy.sleep(4)
-
-                try:
-                    pr2_moveit_utils.go_tool_frame(self.left_arm, lifting, base_frame_id='base_link', ft=False, wait=True)
-                except:
-                    pass
-                
-                try:
-                    pr2_moveit_utils.go_tool_frame(self.left_arm, retreat, base_frame_id='base_link', ft=False, wait=True)
-                except:
-                    pass
-                rospy.sleep(2)
-                finished = True
-
-
-            #IF THE ACTION HAS SUCCEEDED
-            self.flush()
-
-            if finished:
-                self.pub_grasped.publish("SUCCESS")
-                self.set_status('SUCCESS')
-                self.pub_rate.sleep()
                 break
-            else:
+            except:
+                pass
+        # curr_pose = self.left_arm.get_current_pose()
+
+
+        '''
+        PRE-GRASPING
+        '''
+        planner_frame = self._item + "_detector"
+        arm_now = self.get_arm_to_move()
+
+
+        if arm_now == 'right_arm':
+            self.open_right_gripper()
+        else:
+            self.open_left_gripper()
+
+        pre_pose = kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector( self.pre_distance, 0, 0))
+
+        if arm_now == 'right_arm':
+            try:
+                pr2_moveit_utils.go_tool_frame(self.right_arm, pre_pose, base_frame_id = planner_frame, ft=self.ft_switch,
+                                               wait=True)
+            except:
+                self.flush()
                 self.set_status('FAILURE')
-                self.pub_rate.sleep()
+                return
+        else:
+            try:
+                pr2_moveit_utils.go_tool_frame(self.left_arm, pre_pose, base_frame_id = planner_frame, ft=self.ft_switch,
+                                               wait=True)
+            except:
+                self.flush()
+                self.set_status('FAILURE')
+                return
+
+        '''
+        REACHING
+        '''
+        reaching_pose = kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector( 0,0,0))
+
+        if arm_now == 'right_arm':
+            try:
+                pr2_moveit_utils.go_tool_frame(self.right_arm, reaching_pose, base_frame_id = planner_frame, ft=self.ft_switch,
+                                               wait=True)
+            except:
+                self.flush()
+                self.set_status('FAILURE')
+                return
+        else:
+            try:
+                pr2_moveit_utils.go_tool_frame(self.left_arm, reaching_pose, base_frame_id = planner_frame, ft=self.ft_switch,
+                                               wait=True)
+            except:
+                self.flush()
+                self.set_status('FAILURE')
+                return
+
+        '''
+        GRASPING
+        '''
+        if arm_now == 'right_arm':
+            self.close_right_gripper()
+        else:
+            self.close_left_gripper()
+
+        '''
+        LIFTING
+        '''
+
+        lifting_pose = kdl.Frame(tp[1], kdl.Vector( tp[0][0], tp[0][1], tp[0][2]) + self.lifting_height)
+
+        if arm_now == 'right_arm':
+            try:
+                pr2_moveit_utils.go_tool_frame(self.right_arm, lifting_pose, base_frame_id = 'base_link', ft=self.ft_switch,
+                                               wait=True)
+            except:
+                self.flush()
+                self.set_status('FAILURE')
+                return
+        else:
+            try:
+                pr2_moveit_utils.go_tool_frame(self.left_arm, lifting_pose, base_frame_id = 'base_link', ft=self.ft_switch,
+                                               wait=True)
+            except:
+                self.flush()
+                self.set_status('FAILURE')
+                return
+
+
+        '''
+        RETREATING
+        '''
+        retreating_pose = kdl.Frame(kdl.Rotation.RPY(0, 0, 0), kdl.Vector( -self.pre_distance , 0 ,0))
+
+        if arm_now == 'right_arm':
+            try:
+                pr2_moveit_utils.go_tool_frame(self.right_arm, retreating_pose, base_frame_id = planner_frame, ft=self.ft_switch,
+                                               wait=True)
+            except:
+                self.flush()
+                self.set_status('FAILURE')
+                return
+        else:
+            try:
+                pr2_moveit_utils.go_tool_frame(self.left_arm, retreating_pose, base_frame_id = planner_frame, ft=self.ft_switch,
+                                               wait=True)
+            except:
+                self.flush()
+                self.set_status('FAILURE')
+                return
+
+
+        #IF THE ACTION HAS SUCCEEDED
+        self.flush()
+
+
+
+        self.pub_grasped.publish("SUCCESS")
+        self.set_status('SUCCESS')
+        self.pub_rate.sleep()
+        return
 
 
     def set_status(self, status):
@@ -208,6 +240,22 @@ class BTAction(object):
         ope.goal.command.position = position
         ope.goal.command.max_effort = max_effort
         self.r_gripper_pub.publish(ope)
+
+    def close_left_gripper(self):
+        self.go_left_gripper(0, 40)
+        rospy.sleep(4)
+
+    def close_right_gripper(self):
+        self.go_right_gripper(0, 40)
+        rospy.sleep(4)
+
+    def open_left_gripper(self):
+        self.go_left_gripper(10, 40)
+        rospy.sleep(2)
+
+    def open_right_gripper(self):
+        self.go_right_gripper(10, 40)
+        rospy.sleep(2)
 
 
 

@@ -7,6 +7,9 @@ import actionlib
 
 import amazon_challenge_bt_actions.msg
 
+import grasping_lib
+
+
 from std_msgs.msg import String
 import sys
 
@@ -89,7 +92,8 @@ class superDetector(object):
             while not rospy.is_shutdown():
                 rospy.sleep(0.5)
                 try:
-                    self.tp = self.listener.lookupTransform('/base_link', '/' + self._item, rospy.Time(0))
+                    self.tp = grasping_lib.getGraspFrame(self.listener, self._bin, self._item)
+                    # self.tp = self.listener.lookupTransform('/base_link', '/' + self._item, rospy.Time(0))
                     rospy.loginfo('object pose UPDATED')
                     self.obsAccumulation.append(self.tp[0])
                     if len(self.obsAccumulation) == self.obsN:
