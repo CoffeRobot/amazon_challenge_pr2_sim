@@ -6,8 +6,8 @@ json_file:
 gazebo_models:
   cheezit_big_original:
     bin: bin_G
-    pose: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    pose: [0.1, 0.0, 0.0, 0.0, 0.0, 0.0]
     
   crayola_64_ct:
     bin: bin_I
-    pose: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    pose: [0.08, 0.0, 0.0, 0.0, 0.0, 0.0]
