@@ -36,10 +36,21 @@ catkin_make
 
 ### Launching the simulation ###
 
+## Empty shelf ##
+
 To simulate a PR2 and empty Kiva shelf in Gazebo:
 
 ```
 #!python
 
 roslaunch pr2_amazon_challenge_sim pr2_empty_shelf.launch
+```
+
+## Test case 1: cheezit_big_original in bin G and crayola_64_ct in bin I ##
+
+
+```
+#!python
+
+roslaunch pr2_amazon_challenge_sim test_case_1.launch
 ```
