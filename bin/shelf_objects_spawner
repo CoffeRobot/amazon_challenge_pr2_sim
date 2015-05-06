@@ -39,6 +39,8 @@ import rospy
 import PyKDL as kdl
 import numpy as np
 import rospkg
+from tf import TransformBroadcaster
+from tf_conversions import posemath
 
 if __name__=="__main__":
 
@@ -96,6 +98,8 @@ if __name__=="__main__":
 
         F_world_model = F_world_front_shelf * F_front_shelf_model
 
+        models[model_name]['world_pose'] = F_world_model
+
         x = str(F_world_model.p[0])
         y = str(F_world_model.p[1])
         z = str(F_world_model.p[2])
@@ -113,4 +117,19 @@ if __name__=="__main__":
         print os_command
 
         os.system(os_command)
+
+
+    tf_br = TransformBroadcaster()
+    r = rospy.Rate(10)
+
+
+    while not rospy.is_shutdown():
+
+
+        for model_name in models.keys():
+            world_pose = models[model_name]['world_pose']
+            (translation, rotation) = posemath.toTf(world_pose)
+            tf_br.sendTransform(translation, rotation, rospy.Time.now(), model_name, 'odom_combined')
+
+        r.sleep()
 
