@@ -30,8 +30,8 @@ class DummySimtrackSeg():
         self.bins = {}
         self.task_list = []
 
-        self.camera_srv = rospy.Service('/simtrack/tracker_switch_camera', SwitchCamera, self.switch_camera_srv_cb)
-        self.obj_srv = rospy.Service('/simtrack/tracker_switch_objects', SwitchObjects, self.switch_object_srv_cb)
+        self.camera_srv = rospy.Service('/simtrack/switch_camera', SwitchCamera, self.switch_camera_srv_cb)
+        self.obj_srv = rospy.Service('/simtrack/switch_objects', SwitchObjects, self.switch_object_srv_cb)
         self.seg_srv = rospy.Service('/aggregate_cloud', StartAggregator, self.start_aggregator_srv_cb)
 
 
