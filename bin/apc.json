@@ -1,87 +1,95 @@
 {
     "bin_contents": {
         "bin_A": [
-            "kong_sitting_frog_dog_toy",
-            "first_years_take_and_toss_straw_cup",
-            "feline_greenies_dental_treats"
+            "munchkin_white_hot_duck_bath_toy"
         ],
         "bin_B": [
-            "champion_copper_plus_spark_plug",
-            "laugh_out_loud_joke_book"
+            "paper_mate_12_count_mirado_black_warrior",
+            "oreo_mega_stuf"
         ],
         "bin_C": [
-            "mark_twain_huckleberry_finn",
-            "munchkin_white_hot_duck_bath_toy",
-            "crayola_64_ct"
+            "stanley_66_052",
+            "elmers_washable_no_run_school_glue"
         ],
         "bin_D": [
-            "stanley_66_052"
+            "champion_copper_plus_spark_plug",
+            "kong_air_dog_squeakair_tennis_ball"
         ],
         "bin_E": [
-            "rolodex_jumbo_pencil_cup",
-            "kong_duck_dog_toy",
-            "mommys_helper_outlet_plugs"
+            "laugh_out_loud_joke_book",
+            "kong_duck_dog_toy"
         ],
         "bin_F": [
-            "paper_mate_12_count_mirado_black_warrior"
+            "expo_dry_erase_board_eraser",
+            "highland_6539_self_stick_notes"
         ],
         "bin_G": [
-            "genuine_joe_plastic_stir_sticks",
-            "kong_air_dog_squeakair_tennis_ball",
-            "cheezit_big_original"
+            "dr_browns_bottle_brush"
         ],
         "bin_H": [
-            "elmers_washable_no_run_school_glue",
-            "mead_index_cards"
+            "kyjen_squeakin_eggs_plush_puppies",
+            "cheezit_big_original"
         ],
         "bin_I": [
-            "expo_dry_erase_board_eraser",
-            "kyjen_squeakin_eggs_plush_puppies"
+            "elmers_washable_no_run_school_glue",
+            "feline_greenies_dental_treats",
+            "first_years_take_and_toss_straw_cup"
         ],
         "bin_J": [
-            "sharpie_accent_tank_style_highlighters"
+            "crayola_64_ct"
         ],
         "bin_K": [
-            "dr_browns_bottle_brush",
-            "oreo_mega_stuf"
+            "mark_twain_huckleberry_finn"
         ],
         "bin_L": [
             "safety_works_safety_glasses",
-            "highland_6539_self_stick_notes"
+            "kong_sitting_frog_dog_toy"
         ]
     },
     "work_order": [
         {
-            "bin": "bin_D",
-            "item": "stanley_66_052"
+            "bin": "bin_A",
+            "item": "munchkin_white_hot_duck_bath_toy"
         },
         {
-            "bin": "bin_E",
-            "item": "rolodex_jumbo_pencil_cup"
-        },
-        {
-            "bin": "bin_F",
+            "bin": "bin_B",
             "item": "paper_mate_12_count_mirado_black_warrior"
         },
         {
-            "bin": "bin_G",
-            "item": "genuine_joe_plastic_stir_sticks"
+            "bin": "bin_C",
+            "item": "stanley_66_052"
         },
         {
-            "bin": "bin_H",
-            "item": "elmers_washable_no_run_school_glue"
+            "bin": "bin_D",
+            "item": "champion_copper_plus_spark_plug"
         },
         {
-            "bin": "bin_I",
+            "bin": "bin_E",
+            "item": "laugh_out_loud_joke_book"
+        },
+        {
+            "bin": "bin_F",
             "item": "expo_dry_erase_board_eraser"
         },
         {
+            "bin": "bin_G",
+            "item": "dr_browns_bottle_brush"
+        },
+        {
+            "bin": "bin_H",
+            "item": "cheezit_big_original"
+        },
+        {
+            "bin": "bin_I",
+            "item": "elmers_washable_no_run_school_glue"
+        },
+        {
             "bin": "bin_J",
-            "item": "sharpie_accent_tank_style_highlighters"
+            "item": "crayola_64_ct"
         },
         {
             "bin": "bin_K",
-            "item": "dr_browns_bottle_brush"
+            "item": "mark_twain_huckleberry_finn"
         },
         {
             "bin": "bin_L",
